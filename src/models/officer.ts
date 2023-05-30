@@ -1,37 +1,34 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface Students {
-  _id: Types.ObjectId;
   name: string;
   cgpa: number;
   year_batch: number;
 }
 
 export interface SharedDetails {
-  _id: Types.ObjectId;
   company_id: string;
+  shared_id: string;
   details_id: string;
 }
 
 export interface Department {
-  _id: Types.ObjectId;
   name: string;
   student_details: Students[];
 }
 
 export interface Officer extends Document {
-  _id: Types.ObjectId;
   name: string;
   email_id: string;
+  imageURL: string;
   college_name: string;
   details: Department[];
   sharedCompany: SharedDetails[];
 }
 
 export const SharedDetailsSchema = new Schema<SharedDetails>({
-  _id: {
-    type: Schema.Types.ObjectId,
-    default: new Types.ObjectId(),
+  shared_id: {
+    type: String,
   },
   company_id: {
     type: String,
@@ -42,10 +39,6 @@ export const SharedDetailsSchema = new Schema<SharedDetails>({
 });
 
 export const StudentsSchema = new Schema<Students>({
-  _id: {
-    type: Schema.Types.ObjectId,
-    default: new Types.ObjectId(),
-  },
   name: {
     type: String,
   },
@@ -58,10 +51,6 @@ export const StudentsSchema = new Schema<Students>({
 });
 
 export const DepartmentSchema = new Schema<Department>({
-  _id: {
-    type: Schema.Types.ObjectId,
-    default: new Types.ObjectId(),
-  },
   name: {
     type: String,
   },
@@ -71,13 +60,12 @@ export const DepartmentSchema = new Schema<Department>({
 });
 
 const OfficerSchema = new Schema<Officer>({
-  _id: {
-    type: Schema.Types.ObjectId,
-    default: new Types.ObjectId(),
-  },
   name: {
     type: String,
     required: true,
+  },
+  imageURL: {
+    type: String,
   },
   email_id: {
     type: String,

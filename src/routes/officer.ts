@@ -17,6 +17,6 @@ router.get("/getOneOfficer/:id", findOfficerController);
 router.get("/getAll", getAllOfficerController);
 router.delete("/deleteOfficer/:id", deleteOfficerController);
 router.post("/addCompanyShared/:id", addCompanySharedDetails);
-router.delete("/removeCompanyShared/:id", removeCompanySharedDetails);
+router.post("/removeCompanyShared/:id", removeCompanySharedDetails);
 
 export default router;
