@@ -87,7 +87,6 @@ export const removeOfficerDetailsController = async (
   try {
     const filter = { _id: req.params.id };
     const detailsOfficerId = req.body._id;
-    console.log(req.body, req.params.id);
     let data = await findAndUpdate(
       filter,
       { $pull: { detailsOfficer: { _id: detailsOfficerId } } },

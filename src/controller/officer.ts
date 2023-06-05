@@ -16,10 +16,13 @@ export const createOfficerController = async (
     const user = await createOfficer({
       name: req.body.name,
       imageURL: req.body.imageURL,
+      mobile_no: req.body.mobile_no,
       email_id: req.body.email_id,
       college_name: req.body.college_name,
-      details: req.body.details,
-      sharedCompany: req.body.sharedCompany,
+      college_details: [],
+      subscribeRequest: [],
+      subscribedCompany: [],
+      sharedtoCompany: [],
     });
     return res.status(200).json({
       message: "This is Officer Create Page",
@@ -73,6 +76,47 @@ export const getAllOfficerController = async (
   });
 };
 
+export const addCollegeDetails = async (
+  req: Request,
+  res: Response
+): Promise<Response<any, Record<string, any>>> => {
+  try {
+    const filter = { _id: req.params.id };
+    let data = await findAndUpdate(
+      filter,
+      { $push: { college_details: req.body.college_details } },
+      { new: true }
+    );
+    return res.status(200).json({
+      message: "This is Officer addCollegeDetails page",
+      data: data,
+    });
+  } catch (e) {
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const removeCollegeDetails = async (
+  req: Request,
+  res: Response
+): Promise<Response<any, Record<string, any>>> => {
+  try {
+    const filter = { _id: req.params.id };
+    const collegeDetailsId = req.body._id;
+    let data = await findAndUpdate(
+      filter,
+      { $pull: { college_details: { _id: collegeDetailsId } } },
+      { new: true }
+    );
+    return res.status(200).json({
+      message: "This is Officer removeCollegeDetails page",
+      data: data,
+    });
+  } catch (e) {
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
 export const addCompanySharedDetails = async (
   req: Request,
   res: Response
@@ -102,7 +146,7 @@ export const removeCompanySharedDetails = async (
     const sharedDetailsId = req.body._id;
     let data = await findAndUpdate(
       filter,
-      { $pull: { sharedCompany: { _id: sharedDetailsId } } },
+      { $pull: { details_shared: { _id: sharedDetailsId } } },
       { new: true }
     );
     return res.status(200).json({
