@@ -1,7 +1,6 @@
 import express, { NextFunction, Request, Response, Router } from "express";
 const router: Router = Router();
 import multer from "multer";
-import BodyParser from "body-parser";
 import {
   createOfficerController,
   findOfficerController,
@@ -13,10 +12,14 @@ import {
   deleteOneStudentDetails,
   convertStudentsCSVtoJSON,
   loginOfficerController,
-  verifyToken,
   verifyOfficerByToken,
   getDepartmentDetails,
   getStudentDetailsbyDeptAndYear,
+  otpEmailSendController,
+  forgetPasswordController,
+  addCancelledRequest,
+  addSubscribeRequestToCompany,
+  addSubscribedOfficerFromOfficer,
 } from "../controller/officer";
 
 // Set up multer storage
@@ -25,9 +28,6 @@ const storage = multer({ dest: "uploads/" });
 // Set up multer upload middleware
 const upload = multer();
 
-router.use(BodyParser.json());
-
-router.use(BodyParser.urlencoded({ extended: true }));
 // const upload = multer({ dest: "uploads/" });
 
 // Routes connected to the controllers officers function
@@ -36,48 +36,62 @@ router.use(BodyParser.urlencoded({ extended: true }));
 router.post("/loginOfficer", loginOfficerController);
 
 // verify the token from frontend ROute
-router.post("/verifyOfficerToken", verifyToken, verifyOfficerByToken);
+router.post("/verifyOfficerToken", verifyOfficerByToken);
 
 // Create Officer Route
 router.post("/createOfficer", createOfficerController);
 
 // Get One Officer by id
-router.get("/getOneOfficer/:id", verifyToken, findOfficerController);
+router.get("/getOneOfficer/:id", findOfficerController);
 
 // Get All Officers
-router.get("/getAll", verifyToken, getAllOfficerController);
+router.get("/getAll", getAllOfficerController);
 
 // Delete Officer By ID
-router.delete("/deleteOfficer/:id", verifyToken, deleteOfficerController);
+router.delete("/deleteOfficer/:id", deleteOfficerController);
 
 // Add Students details department wise, year_batch_wise
-router.put("/addCollegeDetails/:id", verifyToken, addDepartmentDetails);
+router.put("/addCollegeDetails/:id", addDepartmentDetails);
 
 // Delete Students details department wise, year_batch_wise
-router.put("/removeCollegeDetails/:id", verifyToken, removeDepartmentDetails);
+router.put("/removeCollegeDetails/:id", removeDepartmentDetails);
 
 // Add One Student Details manually
-router.put("/addOneStudentDetails/:id", verifyToken, addOneStudentDetails);
+router.put("/addOneStudentDetails/:id", addOneStudentDetails);
 
 // Delete One Student Details manually
 router.put(
   "/deleteOneStudentDetails/:id",
-  verifyToken,
+
   deleteOneStudentDetails
 );
 
 // Route to convert CSV To JSON
-router.post("/uploadCSVOfStudents/:id", verifyToken, convertStudentsCSVtoJSON);
+router.post("/uploadCSVOfStudents/:id", convertStudentsCSVtoJSON);
 
 // Get All Departmant Details API
-router.get("/getDepartmentDetails/:id", verifyToken, getDepartmentDetails);
+router.get("/getDepartmentDetails/:id", getDepartmentDetails);
 
 // get One Department Details API
 router.post(
   "/getStudentDetails/:id",
-  verifyToken,
   upload.any(),
   getStudentDetailsbyDeptAndYear
 );
+
+// Send OTP to the email_id send
+router.post("/otpEmail", otpEmailSendController);
+
+// Set the new password by sending the token and new password
+router.post("/forgetPassword", forgetPasswordController);
+
+// cancle request of company
+router.put("/addCancelledRequest", addCancelledRequest);
+
+// add Request from officer to company
+router.post("/addSubscribeRequestToCompany", addSubscribeRequestToCompany);
+
+// add subscription to the Officers
+router.put("/addSubscribedOfficerFromOfficer", addSubscribedOfficerFromOfficer);
 
 export default router;
