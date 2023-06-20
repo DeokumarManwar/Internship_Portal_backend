@@ -2,7 +2,7 @@ import { Schema, model, Document } from "mongoose";
 
 // Selected Students by Company Department wise student storing--
 
-export interface selectedStudentsDepartwise {
+export interface selectedStudentsDepartwiseInterface {
   student_id: string;
   index: number;
 }
@@ -14,8 +14,9 @@ export interface selectedStudentsDepartwise {
 export interface selectedStudents {
   department_name: string;
   year_batch: string;
-  date: Date;
-  selectedstudents: selectedStudentsDepartwise[];
+  start_date: Date;
+  end_date: Date;
+  selectedstudents: selectedStudentsDepartwiseInterface[];
 }
 
 // Selected Students by Company Interface --------------------------
@@ -110,7 +111,7 @@ export interface Officer extends Document {
 // Selected Students by Company Department wise student storing Schema
 
 export const selectedStudentsDepartwise =
-  new Schema<selectedStudentsDepartwise>({
+  new Schema<selectedStudentsDepartwiseInterface>({
     student_id: {
       type: String,
     },
@@ -130,7 +131,10 @@ export const selectedStudents = new Schema<selectedStudents>({
   year_batch: {
     type: String,
   },
-  date: {
+  start_date: {
+    type: Date,
+  },
+  end_date: {
     type: Date,
   },
   selectedstudents: {

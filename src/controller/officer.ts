@@ -1101,6 +1101,7 @@ export const addSubscribedOfficerFromOfficer = async (
         const companyData = {
           officer_id: tokenVerify.data,
           index: officer[0].index,
+          selectedstudents: [],
         };
         company[0].subscribed_officer.push(companyData);
 

@@ -60,11 +60,7 @@ router.put("/removeCollegeDetails/:id", removeDepartmentDetails);
 router.put("/addOneStudentDetails/:id", addOneStudentDetails);
 
 // Delete One Student Details manually
-router.put(
-  "/deleteOneStudentDetails/:id",
-
-  deleteOneStudentDetails
-);
+router.put("/deleteOneStudentDetails/:id", deleteOneStudentDetails);
 
 // Route to convert CSV To JSON
 router.post("/uploadCSVOfStudents/:id", convertStudentsCSVtoJSON);

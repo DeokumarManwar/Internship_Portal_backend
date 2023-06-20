@@ -439,6 +439,7 @@ export const addSubscribedOfficerFromCompany = async (
         const companyData = {
           officer_id: officer_id,
           index: officer[0].index,
+          selectedstudents: [],
         };
         companydata[0].subscribed_officer.push(companyData);
 
@@ -540,6 +541,123 @@ export const addCancelledRequest = async (req: Request, res: Response) => {
       } else {
         // error:
         return res.status(400).json({ message: "Company not found" });
+      }
+    } else {
+      // error:
+      return res
+        .status(500)
+        .json({ message: "Problem in verifying the token" });
+    }
+  } catch (e) {
+    // error:
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// selected students by companies without dates
+
+export const selectedStudentsByCompaniesWithoutDates = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const bearerHeader = req.headers.authorization;
+    const bearer: string = bearerHeader as string;
+    const tokenVerify = jwt.verify(
+      bearer.split(" ")[1],
+      SecretKey
+    ) as jwt.JwtPayload;
+    if (tokenVerify) {
+      const { officer_id, index, selected_students } = req.body;
+      const company_id = tokenVerify.tokenData;
+      if (
+        !officer_id ||
+        !company_id ||
+        !index ||
+        selected_students.length === 0
+      ) {
+        // error:
+        return res.status(400).json({ message: "Incomplete Data" });
+      } else {
+        // confirm the company and officer is both subscribed
+        const verifyOfficer = await OfficerModel.find({ _id: officer_id });
+        const verifyCompany = await CompanyModel.find({ _id: company_id });
+
+        const foundCompany = verifyCompany[0].subscribed_officer.find(
+          (obj) => obj.officer_id === officer_id
+        );
+        const foundOfficer = verifyOfficer[0].subscribed_company.find(
+          (obj) => obj.company_id === company_id
+        );
+
+        if (!foundCompany || !foundOfficer) {
+          // error:
+          return res.status(400).json({ message: "Invalid Subscription" });
+        } else {
+          // then add the data into both the schemas
+          // save them
+          // Success: Data set Successfully
+        }
+      }
+    } else {
+      // error:
+      return res
+        .status(500)
+        .json({ message: "Problem in verifying the token" });
+    }
+  } catch (e) {
+    // error:
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// selected students by companies with dates
+
+export const selectedStudentsByCompaniesWithDates = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const bearerHeader = req.headers.authorization;
+    const bearer: string = bearerHeader as string;
+    const tokenVerify = jwt.verify(
+      bearer.split(" ")[1],
+      SecretKey
+    ) as jwt.JwtPayload;
+    if (tokenVerify) {
+      const { officer_id, index, start_date, end_date, selected_students } =
+        req.body;
+      const company_id = tokenVerify.tokenData;
+      if (
+        !officer_id ||
+        !company_id ||
+        !start_date ||
+        !end_date ||
+        !index ||
+        selected_students.length === 0
+      ) {
+        // error:
+        return res.status(400).json({ message: "Incomplete Data" });
+      } else {
+        // confirm the company and officer is both subscribed
+        const verifyOfficer = await OfficerModel.find({ _id: officer_id });
+        const verifyCompany = await CompanyModel.find({ _id: company_id });
+
+        const foundCompany = verifyCompany[0].subscribed_officer.find(
+          (obj) => obj.officer_id === officer_id
+        );
+        const foundOfficer = verifyOfficer[0].subscribed_company.find(
+          (obj) => obj.company_id === company_id
+        );
+
+        if (!foundCompany || !foundOfficer) {
+          // error:
+          return res.status(400).json({ message: "Invalid Subscription" });
+        } else {
+          // then add the data into both the schemas
+          // save them
+          // Success: Data set Successfully
+        }
       }
     } else {
       // error:

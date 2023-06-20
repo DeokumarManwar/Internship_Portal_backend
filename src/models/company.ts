@@ -1,5 +1,9 @@
 import { model, Schema, Document, Types } from "mongoose";
-import { Students, selectedStudentsDepartwise } from "./officer";
+import {
+  Students,
+  selectedStudentsDepartwise,
+  selectedStudentsDepartwiseInterface,
+} from "./officer";
 
 // --------------- selected students department of Officer Interface
 export interface departments {
@@ -30,6 +34,7 @@ export interface cancelledOfficer {
 export interface subscribedOfficer {
   officer_id: string;
   index: number;
+  selectedstudents: selectedStudentsDepartwiseInterface[];
 }
 // ---------------------------------------------- subscribedOfficer Interface
 
@@ -112,6 +117,9 @@ const subscribedOfficer = new Schema<subscribedOfficer>({
   },
   index: {
     type: Number,
+  },
+  selectedstudents: {
+    type: [selectedStudentsDepartwise],
   },
 });
 
