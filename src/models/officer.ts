@@ -1,4 +1,5 @@
 import { Schema, model, Document } from "mongoose";
+import { batchWiseDepartments, batchwiseDepartmentsInterface } from "./company";
 
 // Selected Students by Company Department wise student storing--
 
@@ -26,6 +27,7 @@ export interface selectedStudents {
 export interface subscribeRequest {
   company_id: string;
   index: number;
+  message: string;
 }
 
 // ----------------------------------- subscribeRequest Interface
@@ -35,6 +37,8 @@ export interface subscribeRequest {
 export interface subscribedCompany {
   company_id: string;
   index: number;
+  message: string;
+  access: batchwiseDepartmentsInterface[];
   selectedstudents: selectedStudents[];
 }
 
@@ -45,6 +49,7 @@ export interface subscribedCompany {
 export interface cancelledCompany {
   company_id: string;
   index: number;
+  message: string;
 }
 
 // ----------------------------------- cancelledCompany Interface
@@ -153,6 +158,12 @@ export const subscribedCompany = new Schema<subscribedCompany>({
   index: {
     type: Number,
   },
+  access: {
+    type: [batchWiseDepartments],
+  },
+  message: {
+    type: String,
+  },
   selectedstudents: {
     type: [selectedStudents],
   },
@@ -169,6 +180,9 @@ export const subscribeRequestFromCompany = new Schema<subscribeRequest>({
   index: {
     type: Number,
   },
+  message: {
+    type: String,
+  },
 });
 
 // ----------------------------------- subscribeRequestFromCompany Schema
@@ -182,6 +196,9 @@ export const subscribeRequesttoCompany = new Schema<subscribeRequest>({
   index: {
     type: Number,
   },
+  message: {
+    type: String,
+  },
 });
 
 // ----------------------------------- subscribeRequestFromCompany Schema
@@ -194,6 +211,9 @@ export const cancelledCompany = new Schema<cancelledCompany>({
   },
   index: {
     type: Number,
+  },
+  message: {
+    type: String,
   },
 });
 

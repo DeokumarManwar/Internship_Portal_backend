@@ -20,6 +20,7 @@ import {
   addCancelledRequest,
   addSubscribeRequestToCompany,
   addSubscribedOfficerFromOfficer,
+  giveAccessToCompanies,
 } from "../controller/officer";
 
 // Set up multer storage
@@ -89,5 +90,8 @@ router.post("/addSubscribeRequestToCompany", addSubscribeRequestToCompany);
 
 // add subscription to the Officers
 router.put("/addSubscribedOfficerFromOfficer", addSubscribedOfficerFromOfficer);
+
+// give access to companies by passing access and company_id
+router.put("/giveAccessToCompanies", giveAccessToCompanies);
 
 export default router;
