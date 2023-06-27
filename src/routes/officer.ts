@@ -26,6 +26,10 @@ import {
   getAllCompanyByFilter,
   getAllCancelledRequests,
   getAllCompaniesByFilterInChunksWithSearch,
+  getStudentDetailsbyDeptAndYearSeparatedAvaiability,
+  getAllSelectedStudentsByCompanies,
+  makeSelectedStudentsavailableFailed,
+  makeSelectedStudentsUnavailableConfirm,
 } from "../controller/officer";
 
 // Set up multer storage
@@ -104,5 +108,11 @@ router.get("/getAllCompanyByFilter", getAllCompanyByFilter);
 
 // get Searched Companies with respect to AllSubscribedOfficers, AllRequestsbyCompany, AllRequestedOfficers
 router.post("/getCompaniesBySearch", getAllCompaniesByFilterInChunksWithSearch);
+
+//
+router.post(
+  "/getStudentDetailsbyDeptAndYearSeparatedAvaiability",
+  getStudentDetailsbyDeptAndYearSeparatedAvaiability
+);
 
 export default router;

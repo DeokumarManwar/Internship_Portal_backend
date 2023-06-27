@@ -67,76 +67,77 @@ function sendEmail(req: Request, OTP: number, name: string) {
 }
 
 export const sendOTP = async (req: Request, res: Response) => {
-  // try {
-  const { email_id }: { email_id: string } = req.body;
-  // Check if the email_id is present in the database
-  const foundCompany = await CompanyModel.findOne({ email_id: email_id });
-  const foundOfficer = await OfficerModel.findOne({ email_id: email_id });
+  try {
+    const { email_id }: { email_id: string } = req.body;
+    // Check if the email_id is present in the database
+    const foundCompany = await CompanyModel.findOne({ email_id: email_id });
+    const foundOfficer = await OfficerModel.findOne({ email_id: email_id });
 
-  // Generate OTP
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  if (foundCompany && !foundOfficer) {
-    // Company found
-    const company_id = foundCompany._id;
-    // Create OTP Model
-    const createdOTP = await otpModel.create({
-      user_id: company_id,
-      user: "company",
-      otp: otp,
-      otpverified: false,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
-    // Create JWT Token to send in the response
-    const token = jwt.sign({ id: createdOTP._id }, SecretKey, {
-      expiresIn: "5m",
-    });
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    if (foundCompany && !foundOfficer) {
+      // Company found
+      const company_id = foundCompany._id;
+      // Create OTP Model
+      const createdOTP = await otpModel.create({
+        user_id: company_id,
+        user: "company",
+        otp: otp,
+        otpverified: false,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      });
+      // Create JWT Token to send in the response
+      const token = jwt.sign({ id: createdOTP._id }, SecretKey, {
+        expiresIn: "5m",
+      });
 
-    // Send Email
-    sendEmail(req, otp, foundCompany.username)
-      .then((response) => {
-        // Success
-        res.status(200).json({ message: response, token: token });
-      })
-      .catch((error) => res.status(500).json({ error: error.message }));
-  } else if (!foundCompany && foundOfficer) {
-    // Officer found
-    const officer_id = foundOfficer._id;
+      // Send Email
+      sendEmail(req, otp, foundCompany.username)
+        .then((response) => {
+          // Success
+          res.status(200).json({ message: response, token: token });
+        })
+        .catch((error) => res.status(500).json({ error: error.message }));
+    } else if (!foundCompany && foundOfficer) {
+      // Officer found
+      const officer_id = foundOfficer._id;
 
-    // Create OTP Model
-    const createdOTP = await otpModel.create({
-      user_id: officer_id,
-      user: "officer",
-      otp: otp,
-      otpverified: false,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
+      // Create OTP Model
+      const createdOTP = await otpModel.create({
+        user_id: officer_id,
+        user: "officer",
+        otp: otp,
+        otpverified: false,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      });
 
-    // Create JWT Token to send in the response
-    const token = jwt.sign({ id: createdOTP._id }, SecretKey, {
-      expiresIn: "5m",
-    });
+      // Create JWT Token to send in the response
+      const token = jwt.sign({ id: createdOTP._id }, SecretKey, {
+        expiresIn: "5m",
+      });
 
-    // Send Email
-    sendEmail(req, otp, foundOfficer.username)
-      .then((response) => {
-        // Success
-        res.status(200).json({ message: response, token: token });
-      })
-      .catch((error) => res.status(500).json({ error: error.message }));
-  } else {
-    // Error: User not found
-    return res.status(404).json({ message: "Invalid User" });
+      // Send Email
+      sendEmail(req, otp, foundOfficer.username)
+        .then((response) => {
+          // Success
+          res.status(200).json({ message: response, token: token });
+        })
+        .catch((error) => res.status(500).json({ error: error.message }));
+    } else {
+      // Error: User not found
+      return res.status(404).json({ message: "Invalid User" });
+    }
+  } catch (e) {
+    // Error:
+    return res.status(500).json({ message: "Server Error" });
   }
-  // } catch (e) {
-  //   // Error:
-  //   return res.status(500).json({ message: "Server Error" });
-  // }
 };
 
 export const verifyOTP = async (req: Request, res: Response) => {
   try {
-    const { otp }: { otp: number } = req.body;
+    let { otp }: { otp: number } = req.body;
     const token = req.headers.authorization?.split(" ")[1];
+    otp = Number(otp);
 
     // Check if the token and otp is present in the request
     if (!token || !otp) {

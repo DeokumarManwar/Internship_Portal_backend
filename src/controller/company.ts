@@ -579,6 +579,7 @@ export const selectedStudentsByCompaniesWithoutDates = async (
             year_batch: year_batch,
             end_date: null,
             start_date: null,
+            confirmed: false,
             studentsdetails: selected_students,
           };
 
@@ -708,6 +709,7 @@ export const selectedStudentsByCompaniesWithDates = async (
             year_batch: year_batch,
             end_date: end_date,
             start_date: start_date,
+            confirmed: false,
             studentsdetails: selected_students,
           };
 
@@ -1034,14 +1036,14 @@ export const getAllSubscribedOfficers = async (req: Request, res: Response) => {
         // Error:
         return res.status(400).json({ message: "Officer does not exist" });
       } else {
-        const getAllSubscribedOfficers =
-          foundCompany.subscribe_request_to_officer;
+        const getAllSubscribedOfficers = foundCompany.subscribed_officer;
 
         if (getAllSubscribedOfficers.length === 0) {
           // No Requested Companies
           return res.status(200).json({ message: "Not any Request" });
         } else {
           // Success:
+
           return res.status(200).json({
             message: "get All Requested Companies Successful",
             data: getAllSubscribedOfficers,
