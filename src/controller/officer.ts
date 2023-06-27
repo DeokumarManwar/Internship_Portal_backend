@@ -18,6 +18,8 @@ import OfficerModel, {
 } from "../models/officer";
 import CompanyModel, { Company, subscribedOfficer } from "../models/company";
 import { off } from "process";
+import verificationModel from "../models/verification";
+import { sendEmail } from "./otp";
 
 // Delete the upload folder that is created to upload a CSV
 const deleteFolder = (folderPath: string) => {
@@ -63,17 +65,36 @@ export const loginOfficerController = async (req: Request, res: Response) => {
         let foundOfficer = data;
         const hashedPassword = foundOfficer.password;
         // comparing the password.
-        bcrypt.compare(password, hashedPassword).then((results) => {
+        bcrypt.compare(password, hashedPassword).then(async (results) => {
           if (results) {
             // Converting the id and email
-            const token = jwt.sign({ data: data._id }, SecretKey);
+            const tokenToSave = jwt.sign({ data: data._id }, SecretKey);
 
-            //Success: ogin Successful
-            return res.status(200).send({
-              message: "Login Successful",
-              data: data._id,
-              token: token,
+            // Creating the OTP for two step verification
+            const otp = Math.floor(100000 + Math.random() * 900000);
+
+            // Create verification Model
+            const createdVerification = await verificationModel.create({
+              user_token: tokenToSave,
+              user: "officer",
+              otp: otp,
+              otpverified: false,
+              expiresAt: new Date(Date.now() + 5 * 60 * 1000),
             });
+
+            // Create JWT Token to send in the response
+            const token = jwt.sign({ id: createdVerification._id }, SecretKey, {
+              expiresIn: "5m",
+            });
+
+            // Send the OTP to the officer's email
+            // Send Email
+            sendEmail(req, otp, foundOfficer.username, "validation")
+              .then((response) => {
+                //Success: Login Successful
+                res.status(200).json({ message: response, token: token });
+              })
+              .catch((error) => res.status(500).json({ error: error.message }));
           } else {
             //Error: Wrong Password
             return res.status(404).json({ message: "Wrong Password Error" });
@@ -87,6 +108,63 @@ export const loginOfficerController = async (req: Request, res: Response) => {
   } catch (e) {
     //Error: Server Problem
     return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// verify Officer by Token got from frontend
+export const verifyOfficerTwoStepValidation = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const bearerHeader = req.headers.authorization;
+    const bearer: string = bearerHeader as string;
+    const tokenVerify = jwt.verify(
+      bearer.split(" ")[1],
+      SecretKey
+    ) as jwt.JwtPayload;
+    if (tokenVerify) {
+      // find the verification data
+      const verification = await verificationModel.findById({
+        _id: tokenVerify.id,
+      });
+      if (
+        verification &&
+        verification.otpverified === false &&
+        verification.user === "officer"
+      ) {
+        // take otp from frontend and
+        const { otp } = req.body;
+        if (Number(otp) === verification.otp) {
+          // Success: OTP verified
+          verification.otpverified = true;
+          await verification.save();
+
+          const tokenData = jwt.verify(
+            verification.user_token,
+            SecretKey
+          ) as jwt.JwtPayload;
+
+          return res.status(200).json({
+            message: "OTP verified",
+            data: tokenData,
+            token: verification.user_token,
+          });
+        } else {
+          // Error: Invalid OTP
+          return res.status(400).json({ message: "Invalid OTP" });
+        }
+      } else {
+        // Error: Problem in verifying
+        return res.status(500).json({ message: "Invalid Token" });
+      }
+    } else {
+      //Error: cannot verify token
+      res.status(400).json({ message: "Cannot verify token" });
+    }
+  } catch (e) {
+    //Error: Problem in verifying
+    return res.status(500).json({ message: "Problem in verifying the token" });
   }
 };
 
@@ -229,7 +307,7 @@ export const findOfficerController = async (
     ) as jwt.JwtPayload;
     if (tokenVerify) {
       // finding the officer by the ID got from the frontend
-      // const filter = ;
+
       let data = await OfficerModel.findById({ _id: tokenVerify.data }).select(
         " -password"
       );
@@ -930,7 +1008,6 @@ export const getStudentDetailsbyDeptAndYearSeparatedAvaiability = async (
       .json({ message: "Error occurred while getting the student details" });
   }
 };
-
 
 // Add subscribe request to Company
 export const addSubscribeRequestToCompany = async (
@@ -1652,7 +1729,10 @@ export const getAllCompaniesByFilterInChunksWithSearch = async (
 };
 
 // confirm the selected students department wise and batch-year wise to be unavailable with respect to the Date Provided
-export const confirmSelectedStudents = async (req: Request, res: Response) => {
+export const confirmSelectedStudentsWithDates = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const bearerHeader = req.headers.authorization;
     const bearer: string = bearerHeader as string;
@@ -1661,6 +1741,125 @@ export const confirmSelectedStudents = async (req: Request, res: Response) => {
       SecretKey
     ) as jwt.JwtPayload;
     if (tokenVerify) {
+      // get the data from frontend
+      const { company_id, company_name, selectedstudents } = req.body;
+      if (!company_id || !selectedstudents) {
+        // Error: Data not found
+        return res.status(400).json({ message: "Incomplete Data" });
+      } else {
+        // find the Officer
+        const Officer = await OfficerModel.findById({ _id: tokenVerify.data });
+        const Company = await CompanyModel.findById({ _id: company_id });
+        if (!Officer || !Company) {
+          return res
+            .status(404)
+            .json({ message: "Officer or Company not found" });
+        } else {
+          // take out the data from selectedstudents
+          const {
+            department_name,
+            start_date,
+            end_date,
+            year_batch,
+          }: {
+            department_name: string;
+            start_date: Date;
+            end_date: Date;
+            year_batch: number;
+          } = selectedstudents[0];
+
+          console.log(department_name, start_date, end_date, year_batch);
+
+          let foundElement: Department | null = null;
+          // find the department and year_batch in officer
+          for (let i = 0; i < Officer.college_details.length; i++) {
+            if (
+              Officer.college_details[i].department_name === department_name &&
+              Officer.college_details[i].year_batch === year_batch
+            ) {
+              foundElement = Officer.college_details[i];
+              break;
+            }
+          }
+
+          if (foundElement === null) {
+            // Error: Department not found
+            return res.status(404).json({
+              message: `Department ${department_name} with batch year ${year_batch} not found`,
+            });
+          } else {
+            // find the student in the foundElement
+            const students = selectedstudents[0].student_details;
+            for (let i = 0; i < students.length; i++) {
+              // check if the student is already selected for any internship or not boolean
+
+              const studentDetails = foundElement?.student_details;
+              if (studentDetails) {
+                // binary search
+                let foundStudent = false;
+                let low = 0;
+                let high = studentDetails.length - 1;
+
+                while (low <= high) {
+                  let mid = Math.floor((low + high) / 2);
+                  let midElement = studentDetails[mid];
+
+                  if (students[i].index === midElement.index) {
+                    // check if the student is already selected for any internship or not
+                    if (midElement.Internship_status === false) {
+                      // change the status of the student to unavailable
+                      foundStudent = true;
+                      midElement.Internship_status = true;
+                      midElement.current_internship = company_name;
+                      studentDetails[mid].internships_till_now.push(
+                        company_name
+                      );
+                      studentDetails[mid].internship_start_date = start_date;
+                      studentDetails[mid].internship_end_date = end_date;
+                      console.log(
+                        studentDetails[mid].internship_start_date,
+                        studentDetails[mid].internship_end_date
+                      );
+                      break;
+                    } else {
+                      // Error: Student is already selected for any internship
+                      return res.status(400).json({
+                        message: `Student with roll no ${midElement.roll_no} is already selected for ${midElement.current_internship} internship`,
+                      });
+                    }
+                  } else if (students[i].index < midElement.index) {
+                    // search in the left half
+                    high = mid - 1;
+                  } else {
+                    // search in the right half
+                    low = mid + 1;
+                  }
+                }
+
+                if (!foundStudent) {
+                  // Error: Student not found
+                  return res.status(400).json({
+                    message: `Student with roll no ${students[i].roll_no} is not found in the department ${department_name} with batch year ${year_batch}`,
+                  });
+                }
+              }
+            }
+
+            // save the data
+            const savedOfficerDetails = await Officer.save();
+            if (!savedOfficerDetails) {
+              return res
+                .status(400)
+                .json({ message: "Error in saving the officer details" });
+            } else {
+              return res.status(200).json({
+                message:
+                  "Successfully changed the status of the students to unavailable",
+              });
+            }
+          }
+        }
+      }
     }
   } catch (error) {
     // Error:
@@ -1717,7 +1916,8 @@ export const confirmSelectedStudentsWithNoDateProvided = async (
             });
           } else {
             // find the student in the foundElement
-            selectedstudents.student_details.map((e: Students) => {
+
+            selectedstudents[0].student_details.map((e: Students) => {
               // check if the student is already selected for any internship or not boolean
 
               const studentDetails = foundElement?.student_details;
@@ -1738,7 +1938,7 @@ export const confirmSelectedStudentsWithNoDateProvided = async (
                       foundStudent = true;
                       midElement.Internship_status = true;
                       midElement.current_internship = company_name;
-                      selectedstudents[mid].internships_till_now.push(
+                      studentDetails[mid].internships_till_now.push(
                         company_name
                       );
                       break;

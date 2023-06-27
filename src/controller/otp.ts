@@ -8,7 +8,12 @@ import otpModel from "../models/otp";
 const SecretKey = "lim4yAey6K78dA8N1yKof4Stp9H4A";
 
 // Forget Password OTP email send function.
-function sendEmail(req: Request, OTP: number, name: string) {
+export function sendEmail(
+  req: Request,
+  OTP: number,
+  name: string,
+  type: string
+) {
   return new Promise((resolve, reject) => {
     // Configure the nodemailer
     var transporter = nodemailer.createTransport({
@@ -19,12 +24,15 @@ function sendEmail(req: Request, OTP: number, name: string) {
       },
     });
 
-    // Configure the mail
-    const mail_configs = {
-      from: "teamgenshinofficial@gmail.com",
-      to: req.body.email_id,
-      subject: "Internship Portal Password Recovery",
-      html: `<!DOCTYPE html>
+    let mail_configs;
+
+    if (type === "recovery") {
+      // Configure the mail
+      mail_configs = {
+        from: "teamgenshinofficial@gmail.com",
+        to: req.body.email_id,
+        subject: "Internship Portal Password Recovery",
+        html: `<!DOCTYPE html>
 <html lang="en" >
 <head>
   <meta charset="UTF-8">
@@ -35,7 +43,7 @@ function sendEmail(req: Request, OTP: number, name: string) {
 <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
   <div style="margin:50px auto;width:70%;padding:20px 0">
     <div style="border-bottom:1px solid #eee">
-      <a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">OneCab</a>
+      <a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">Internship Portal</a>
     </div>
     <p style="font-size:1.1em">Hi ${name},</p>
     <p>Thank you for choosing Internship Portal. Use the following OTP to complete your Password Recovery Procedure. OTP is valid for 5 minutes</p>
@@ -53,7 +61,44 @@ function sendEmail(req: Request, OTP: number, name: string) {
   
 </body>
 </html>`,
-    };
+      };
+    } else {
+      // Configure the mail
+      mail_configs = {
+        from: "teamgenshinofficial@gmail.com",
+        to: req.body.email_id,
+        subject: "Internship Portal Validation",
+        html: `<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Internship Portal - OTP Email </title>
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+  <div style="margin:50px auto;width:70%;padding:20px 0">
+    <div style="border-bottom:1px solid #eee">
+      <a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">Internship Portal</a>
+    </div>
+    <p style="font-size:1.1em">Hi ${name},</p>
+    <p>Thank you for choosing Internship Portal. Use the following OTP to complete your validation Procedure. OTP is valid for 5 minutes</p>
+    <h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">${OTP}</h2>
+    <p style="font-size:0.9em;">Regards,<br />Internship Portal</p>
+    <hr style="border:none;border-top:1px solid #eee" />
+    <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
+      <p>Internship Portal Inc</p>
+      <p>Pimpri Chinchwad</p>
+      <p>Pune</p>
+    </div>
+  </div>
+</div>
+<!-- partial -->
+  
+</body>
+</html>`,
+      };
+    }
     // Send the mail to the gmails.
     transporter.sendMail(mail_configs, function (error, info) {
       if (error) {
@@ -92,7 +137,7 @@ export const sendOTP = async (req: Request, res: Response) => {
       });
 
       // Send Email
-      sendEmail(req, otp, foundCompany.username)
+      sendEmail(req, otp, foundCompany.username, "recovery")
         .then((response) => {
           // Success
           res.status(200).json({ message: response, token: token });
@@ -117,7 +162,7 @@ export const sendOTP = async (req: Request, res: Response) => {
       });
 
       // Send Email
-      sendEmail(req, otp, foundOfficer.username)
+      sendEmail(req, otp, foundOfficer.username, "recovery")
         .then((response) => {
           // Success
           res.status(200).json({ message: response, token: token });

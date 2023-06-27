@@ -202,7 +202,7 @@ export const StudentsSchema = new Schema<Students>({
 
 StudentsSchema.pre<Students>("save", function (next) {
   const currentDate = new Date();
-  if (this.internship_end_date && this.internship_end_date <= currentDate) {
+  if (this.internship_end_date && this.internship_end_date == currentDate) {
     this.Internship_status = false;
     this.current_internship = null;
     this.internship_start_date = null;
